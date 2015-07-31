@@ -3,7 +3,7 @@
 # This script is used to copy a single file to a group of agents.
 # Usage:
 #   -s <server>  
-#      Command Center Server to use. Default is http://localhost:8088/
+#      Command Center Server to use. Default is https://localhost:8088/
 #   -f <file>
 #      File to upload and send to agents.  Default is ./new.pbd
 #   -t <token>
@@ -21,7 +21,7 @@ function usage() {
 cat <<EOF
 usage:
    -s <server>  
-      Command Center Server to use. Default is http://localhost:8088/
+      Command Center Server to use. Default is https://localhost:8088/
    -f <file>
       File to upload and send to agents.  Default is ./new.pbd
    -t <token>
@@ -251,7 +251,7 @@ function progressTasks() {
 #
 # Setup default values
 #
-SERVER=http://localhost:8088/apm/acc
+SERVER=https://localhost:8088/apm/acc
 FILE=new.pbd
 TOKEN=e6a24777-e2cd-4076-92c4-6f98674ae2f2
 DESTINATION=my-new.pbd

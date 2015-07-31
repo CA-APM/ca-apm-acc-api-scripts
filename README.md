@@ -260,7 +260,7 @@ Usage:
 
 	usage:
 	-s <server>
-		Command Center Server to use. Default is http://localhost:8088/
+		Command Center Server to use. Default is https://localhost:8088/
 	-f <file>
 		File to upload and send to agents.  Default is ./new.pbd
 	-t <token>
@@ -273,7 +273,7 @@ Usage:
 
 Sample outputs:
 
-	> ./copy-file.sh –s http://reema03-newdev:8088/
+	> ./copy-file.sh –s https://reema03-newdev:8088/
 
 	Fetching agents ...
 	ID:    Server name:    Process name:   Agent name:
