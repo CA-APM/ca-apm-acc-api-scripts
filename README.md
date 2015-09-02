@@ -20,7 +20,7 @@ See [CA APM Command Center RESTful API](https://wiki.ca.com/display/APMDEVOPS98/
 
 ### Dependencies
 
-* The (*.py) script(s) require Pyhton 2.7 or higher
+* The (*.py) script(s) require Pyhton 2.7 or higher (see comments in the scripts for changes for SSL handling introduced in Python 2.7.9)
 * The (*.groovy) script(s) require Groovy 3 or higher
 * The (*.js) script(s) require Node JS with commander and sync-request modules
 * The (*.sh) script(s) require Bash with GNU toolset (curl version 7.18.0 or higher).
