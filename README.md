@@ -6,6 +6,10 @@ A suite of example scripts utilizing CA APM Command Center API for automating ty
 
 See [CA APM Command Center RESTful API](https://wiki.ca.com/display/APMDEVOPS98/CA+APM+Command+Center+API) for more information.
 
+Also included under `python-library-and-examples` is a python wrapper library 
+(`pyacc.py`) and associated sample scripts as an alternative method of writing
+ACC utility scripts.
+
 ## License
 [Apache License, Version 2.0, January 2004](http://www.apache.org/licenses/). See [Licensing](https://communities.ca.com/docs/DOC-231150910#license) on the CA APM Developer Community.
 
