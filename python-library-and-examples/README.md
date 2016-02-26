@@ -23,6 +23,8 @@ Indeed, it is possible to write some very powerful scripts with the minimum
 code and complexity required by the consumer, which is best shown by looking 
 at an example.
 
+This examples contained herein were tested using python 2.7.6 on Linux.
+
 ### Example - list registered agents
 
 Here is a script to list the agents registered with the ACC Config Server in 
