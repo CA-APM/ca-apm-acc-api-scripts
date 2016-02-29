@@ -45,10 +45,6 @@ class App(pyacc.AccCommandLineApp):
         create_parser.add_argument('--comment', action='store', help="package comment", default="")
         create_parser.add_argument('--em-host', action='store', help="package comment", default="")
 
-        delete_parser = subparsers.add_parser("delete")
-        delete_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='+', type=str,
-                                   help='package ids')
-
         modify_parser = subparsers.add_parser("modify")
         modify_parser.add_argument('-a', '--add', action='append', help="Add a bundle to a package", default=[])
         modify_parser.add_argument('-r', '--remove', action='append', help="Remove a bundle from a package", default=[])
@@ -62,6 +58,10 @@ class App(pyacc.AccCommandLineApp):
         download_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str,
                                      help='package ids', default=[])
         download_parser.add_argument('--all', action='store_true', help="also download old versions of packages")
+
+        delete_parser = subparsers.add_parser("delete")
+        delete_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='+', type=str,
+                                   help='package ids')
 
     def _get_packages(self):
         if self.args.package_ids:

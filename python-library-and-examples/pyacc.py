@@ -428,6 +428,25 @@ class AccApi(AccRaw):
         """Download file with the given file_id"""
         return self.http_get("/apm/acc/file", "%s/content" % file_id, page=None).read()
 
+    def download_controller(self, archive_type=None, filename=None):
+
+        if not archive_type:
+            # Download the appropriate type depending on what platform we're on
+            if os.name == "posix":
+                archive_type = "tar"
+            else:
+                archive_type = "zip"
+
+        fname = "acc-controller-package.%s" % archive_type
+        res = self.http_get("/package/", fname)
+
+        if not filename:
+            filename = fname
+
+        write_content_to_file(res, filename)
+
+        return filename
+
     def files(self, **kwargs):
         """Get all available files"""
         return Files(self, None, **kwargs)
