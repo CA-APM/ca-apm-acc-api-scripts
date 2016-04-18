@@ -45,10 +45,6 @@ class App(pyacc.AccCommandLineApp):
         create_parser.add_argument('--comment', action='store', help="package comment", default="")
         create_parser.add_argument('--em-host', action='store', help="package comment", default="")
 
-        delete_parser = subparsers.add_parser("delete")
-        delete_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='+', type=str,
-                                   help='package ids')
-
         modify_parser = subparsers.add_parser("modify")
         modify_parser.add_argument('-a', '--add', action='append', help="Add a bundle to a package", default=[])
         modify_parser.add_argument('-r', '--remove', action='append', help="Remove a bundle from a package", default=[])
@@ -63,6 +59,19 @@ class App(pyacc.AccCommandLineApp):
                                      help='package ids', default=[])
         download_parser.add_argument('--all', action='store_true', help="also download old versions of packages")
 
+        delete_parser = subparsers.add_parser("delete")
+        delete_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='+', type=str,
+                                   help='package ids')
+
+        override_parser = subparsers.add_parser("overrides")
+
+        # group = override_parser.add_mutually_exclusive_group()
+        override_parser.add_argument('-l', '--list', action='store_true', help="list overrides", default=False)
+        override_parser.add_argument('--all', action='store_true', help="include old versions of packages")
+        override_parser.add_argument('--copy', action='store_true', help="copy overrides to another package", default=False)
+
+        override_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str, help='package ids')
+
     def _get_packages(self):
         if self.args.package_ids:
             # Create a list of Package objects initialized with the package id.
@@ -70,7 +79,7 @@ class App(pyacc.AccCommandLineApp):
             # is queried (e.g. "package["xxx"])
             packages = self.acc.packages_many(self.args.package_ids)
         else:
-            # This will fetch all agents (a page a time)
+            # This will fetch all packages (a page a time)
             if self.args.all:
                 packages = self.acc.packages()
             else:
@@ -194,6 +203,49 @@ class App(pyacc.AccCommandLineApp):
                     # TODO validate/expand the input against data retrieve above. need to pass in the existing bundles.
                     package.add_bundles(after);
 
+    def overrides(self):
+
+        if self.args.copy:
+                src = None
+
+                packages = self.acc.packages_many(self.args.package_ids)
+
+                if len(packages) < 2:
+                    print("Need at least 2 packages (src, dest), trying listing with --list to get the ids")
+                    sys.exit(1)
+
+                for package in packages:
+                    package.get_json()
+                    if not src:
+                        src = package
+                    else:
+                        if src.item_id == package.item_id:
+                            print("Cannot copy override onto self")
+                        else:
+                            print("Copying overrides from %s to %s" % (src.item_id, package.item_id))
+                            package.add_overrides(src["bundleOverrides"])
+        else:
+            for package in self._get_packages():
+                package.get_json()
+                print("# Package id %s, %s, version %s" % (package.item_id, package["packageName"], package["version"]))
+
+                for bundleOverride, properties in package["bundleOverrides"].iteritems():
+                    print("# %s bundle overrides" % bundleOverride)
+
+                    if properties["preamble"]:
+                        print("# %s" % properties["preamble"])
+
+                    # print(properties)
+                    for props in properties["properties"]:
+                        # print(props)
+                        # print()
+
+                        if props["description"]:
+                            print("# %s" % props["description"])
+
+                        print("%s%s=%s" % ("#" if props["hidden"] else "",  props["name"], props["value"]))
+                print()
+
     def main(self):
 
         # Route users command to the handler
@@ -203,6 +255,7 @@ class App(pyacc.AccCommandLineApp):
             "create": self.create,
             "modify": self.modify,
             "download": self.download,
+            "overrides": self.overrides,
         }[self.args.command]
         cmd()
 

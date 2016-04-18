@@ -428,6 +428,25 @@ class AccApi(AccRaw):
         """Download file with the given file_id"""
         return self.http_get("/apm/acc/file", "%s/content" % file_id, page=None).read()
 
+    def download_controller(self, archive_type=None, filename=None):
+
+        if not archive_type:
+            # Download the appropriate type depending on what platform we're on
+            if os.name == "posix":
+                archive_type = "tar"
+            else:
+                archive_type = "zip"
+
+        fname = "acc-controller-package.%s" % archive_type
+        res = self.http_get("/package/", fname)
+
+        if not filename:
+            filename = fname
+
+        write_content_to_file(res, filename)
+
+        return filename
+
     def files(self, **kwargs):
         """Get all available files"""
         return Files(self, None, **kwargs)
@@ -1179,6 +1198,13 @@ class Package(FetchableJsonObject):
         if res.status not in (httplib.OK, httplib.NO_CONTENT):
             raise ACCHttpException(res)
 
+    def add_overrides(self, overrides):
+
+        body='{"bundleOverrides": %s}' % json.dumps(overrides)
+        print("body is", body)
+
+        res, json_obj = self.accapi.http_patch("/apm/acc/package/" + str(self.item_id), body)
+
 
 class AccCommandLineApp(object):
 
@@ -1321,13 +1347,10 @@ class Examples(AccCommandLineApp):
 
         for task in self.acc.wait_for_tasks(tasks, "agentId", timeout_seconds=10):
 
-            # Now fetch the report (as json). TODO download as zip
+            # Now fetch the report (as json).
             print(acc.diagnostic_reports()[task["diagReportId"]])
 
-            print("Writing", filename)
-
-            write_content_to_file(task.get_report_xxx())
-
+            task.get_report().download()
         #
 
         print("Diagnostic Reports")
