@@ -1198,6 +1198,13 @@ class Package(FetchableJsonObject):
         if res.status not in (httplib.OK, httplib.NO_CONTENT):
             raise ACCHttpException(res)
 
+    def add_overrides(self, overrides):
+
+        body='{"bundleOverrides": %s}' % json.dumps(overrides)
+        print("body is", body)
+
+        res, json_obj = self.accapi.http_patch("/apm/acc/package/" + str(self.item_id), body)
+
 
 class AccCommandLineApp(object):
 
@@ -1340,13 +1347,10 @@ class Examples(AccCommandLineApp):
 
         for task in self.acc.wait_for_tasks(tasks, "agentId", timeout_seconds=10):
 
-            # Now fetch the report (as json). TODO download as zip
+            # Now fetch the report (as json).
             print(acc.diagnostic_reports()[task["diagReportId"]])
 
-            print("Writing", filename)
-
-            write_content_to_file(task.get_report_xxx())
-
+            task.get_report().download()
         #
 
         print("Diagnostic Reports")
