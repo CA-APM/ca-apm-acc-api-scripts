@@ -4,6 +4,8 @@ from __future__ import print_function
 
 import pyacc
 
+from pyacc import safe
+
 
 class App(pyacc.AccCommandLineApp):
     """
@@ -16,6 +18,11 @@ class App(pyacc.AccCommandLineApp):
         Add some more args to the standard set
         """
         super(App, self).build_arg_parser()
+
+        self.parser.add_argument('-v', '--verbose', action='store_true', help="be more verbose")
+
+        self.parser.add_argument('-w', '--write', action='store_true', help="Write files in addition to listing them")
+
         self.parser.add_argument('bundle_ids', metavar='BUNDLE_ID', nargs='*', type=str,
                                  help='Query the given bundle ids')
 
@@ -32,23 +39,28 @@ class App(pyacc.AccCommandLineApp):
 
         for bundle in bundles:
 
-            # Print the bundle details
-            bundle["id"]
-            print(bundle)
+            if self.args.verbose:
+                bundle["id"]
+                print(bundle)
+            else:
+                # Print the bundle details
+                print("\t".join([
+                    str(bundle["id"]),
+                    safe(bundle["name"]),
+                    safe(bundle["version"]),
+                    # safe(bundle["displayName"]),
+                    # safe(bundle["description"]),
+                    # safe(bundle["compatibility"]),
+                    # safe(bundle["excludes"]),
+                    # safe(bundle["facets"]),
+                    # safe(bundle["installInstructions"]),
+                    # safe(bundle["path"]),
+                    # safe(bundle["dependencies"]),
+                ]))
 
-            # print("\t".join([
-            #     str(bundle["id"]),
-            #     safe(bundle["name"]),
-            #     safe(bundle["displayName"]),
-            #     safe(bundle["description"]),
-            #     safe(bundle["compatibility"]),
-            #     safe(bundle["excludes"]),
-            #     safe(bundle["facets"]),
-            #     pyacc.safe(bundle["installInstructions"]),
-            #     safe(bundle["path"]),
-            #     safe(bundle["version"]),
-            #     safe(bundle["dependencies"]),
-            # ]))
+            if self.args.write:
+                bundle.download()
+
 
 
 if __name__ == "__main__":

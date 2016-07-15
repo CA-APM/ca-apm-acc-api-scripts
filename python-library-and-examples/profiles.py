@@ -16,6 +16,7 @@ class App(pyacc.AccCommandLineApp):
         super(App, self).build_arg_parser()
         self.parser.add_argument('bundle_ids', metavar='BUNDLE_ID', nargs='*', type=str,
                                  help='Query the given bundle ids')
+        self.parser.add_argument('-v', '--verbose', action='store_true', help="be more verbose")
 
     def main(self):
 
@@ -34,17 +35,22 @@ class App(pyacc.AccCommandLineApp):
             # bundle["id"]
             # print("Bundle:", bundle)
 
-            p = pyacc.Profile(self.acc, bundle.item_id)
-
+            p = bundle.profile()
             props = p["properties"]
 
             if props:
                 # print(bundle)
-                print("# BUNDLE:", bundle.item_id)
+                print("# BUNDLE: %s, %s, version %s" % (bundle.item_id, bundle["displayName"], bundle["version"]))
                 for prop in props:
                     # print(prop)
-                    print("#", prop["description"])
-                    print("%s=%s" % (prop["name"], prop["value"]))
+
+                    if prop["description"]:
+                        print("\n#", prop["description"].strip() )
+
+                    if self.args.verbose:
+                        print("# key=%s" % (prop["key"]))
+
+                    print("%s%s=%s" % ("#" if prop["hidden"] else "", prop["name"], prop["value"]))
 
 if __name__ == "__main__":
     App().run()

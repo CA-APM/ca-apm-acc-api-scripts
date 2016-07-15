@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import sys
+import re
 
 import pyacc
 
@@ -36,14 +37,14 @@ class App(pyacc.AccCommandLineApp):
         list_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str,
                                  help='package ids', default=[])
 
-        create_parser = subparsers.add_parser("create", )
+        create_parser = subparsers.add_parser("create")
         create_parser.add_argument('names', metavar='NAME', nargs='+', type=str, help='package name', default=[])
         create_parser.add_argument('--os', action='store', help="os type", default="unix", choices=["unix", "windows"])
         create_parser.add_argument('--appserver', action='store', help="appserver type", choices=App.appservers, default="other")
         create_parser.add_argument('--agent-version', action='store', help="agent version", default="10.2")
         create_parser.add_argument('--process-display-name', action='store', help="process display name", default="")
         create_parser.add_argument('--comment', action='store', help="package comment", default="")
-        create_parser.add_argument('--em-host', action='store', help="package comment", default="")
+        create_parser.add_argument('--em-host', action='store', help="EM host name", default="")
 
         modify_parser = subparsers.add_parser("modify")
         modify_parser.add_argument('-a', '--add', action='append', help="Add a bundle to a package", default=[])
@@ -54,7 +55,7 @@ class App(pyacc.AccCommandLineApp):
         download_parser = subparsers.add_parser("download")
         download_parser.add_argument('--format', action='store',
                                      help='write files in the given format. "archive" means zip for windows packages, tar.gz for unix packages',
-                                     default="archive", choices=["zip", "tar", "archive"])
+                                     default="archive", choices=["zip", "tar", "tar.gz", "archive"])
         download_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str,
                                      help='package ids', default=[])
         download_parser.add_argument('--all', action='store_true', help="also download old versions of packages")
@@ -64,13 +65,27 @@ class App(pyacc.AccCommandLineApp):
                                    help='package ids')
 
         override_parser = subparsers.add_parser("overrides")
+        override_sub_parser = override_parser.add_subparsers(help="overrides sub-command", dest="command_override")
 
-        # group = override_parser.add_mutually_exclusive_group()
-        override_parser.add_argument('-l', '--list', action='store_true', help="list overrides", default=False)
-        override_parser.add_argument('--all', action='store_true', help="include old versions of packages")
-        override_parser.add_argument('--copy', action='store_true', help="copy overrides to another package", default=False)
+        override_add_parser = override_sub_parser.add_parser("add")
+        # # group.add_argument('--add', action='store_true', help="add overrides to a package bundle", default=False)
+        override_add_parser.add_argument('--bundle', action='store', help="bundle name")
+        override_add_parser.add_argument('--package', action='append', metavar='PACKAGE_ID', dest="package_ids", help="package name")
+        override_add_parser.add_argument('--preamble', action='store', help="preamble text")
+        override_add_parser.add_argument('--replace', action='store_true', help="replace entire existing bundle overrides (use with caution!)")
+        override_add_parser.add_argument('-l', '--list', action='store_true', help="list package/bundle base properties/values")
+        override_add_parser.add_argument('properties', metavar='PROPERTY=VALUE', nargs='*', type=str, help='properties')
 
-        override_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str, help='package ids')
+        override_copy_parser = override_sub_parser.add_parser("copy")
+        # # group.add_argument('--copy', action='store_true', help="copy overrides to another package", default=False)
+        override_copy_parser.add_argument('package_ids', metavar='PACKAGE_ID', nargs='*', type=str, help='package ids')
+
+        override_list_parser = override_sub_parser.add_parser("list")
+        override_list_parser.add_argument('--bundle', action='store', help="bundle name")
+        override_list_parser.add_argument('--all', action='store_true', help="include old versions of packages")
+        override_list_parser.add_argument('--draft', action='store_true', help="draft versions of packages", default=False)
+        override_list_parser.add_argument('--package', action='append', metavar='PACKAGE_ID', dest="package_ids", help="package name")
+        override_list_parser.add_argument('ignored', metavar='IGNORED', nargs='*', type=str, help='ignored')
 
     def _get_packages(self):
         if self.args.package_ids:
@@ -161,7 +176,6 @@ class App(pyacc.AccCommandLineApp):
 
             # Print the package details
             self._print_package(package)
-
             included_ids = set()
             print("\nIncluded bundles:")
             included_bundles = []
@@ -204,47 +218,168 @@ class App(pyacc.AccCommandLineApp):
                     package.add_bundles(after);
 
     def overrides(self):
+        """Route override command to the handler"""
+        cmd = {
+            "copy": self.copy_overrides,
+            "list": self.list_overrides,
+            "add": self.add_overrides,
+        }[self.args.command_override]
+        cmd()
 
-        if self.args.copy:
-                src = None
+    def copy_overrides(self):
+        src = None
 
-                packages = self.acc.packages_many(self.args.package_ids)
+        packages = self.acc.packages_many(self.args.package_ids)
 
-                if len(packages) < 2:
-                    print("Need at least 2 packages (src, dest), trying listing with --list to get the ids")
-                    sys.exit(1)
+        if len(packages) < 2:
+            print("Need at least 2 packages (src, dest), trying listing with 'overrides list' to get the ids")
+            sys.exit(1)
 
-                for package in packages:
-                    package.get_json()
-                    if not src:
-                        src = package
-                    else:
-                        if src.item_id == package.item_id:
-                            print("Cannot copy override onto self")
-                        else:
-                            print("Copying overrides from %s to %s" % (src.item_id, package.item_id))
-                            package.add_overrides(src["bundleOverrides"])
-        else:
+        for package in packages:
+            package.get_json()
+            if not src:
+                src = package
+            else:
+                if src.item_id == package.item_id:
+                    print("Cannot copy override onto self")
+                else:
+                    print("Copying overrides from %s to %s" % (src.item_id, package.item_id))
+                    package.add_overrides(src["bundleOverrides"])
+
+    def list_overrides(self):
+        for package in self._get_packages():
+            package.get_json()
+            print("# Package id=%s, name=%s, version=%s, draft=%s, latest=%s, downloaded=%s" % (
+                package.item_id, package["packageName"], package["version"], package["draft"], package["latest"],
+                package["downloaded"]))
+
+            for bundleOverride, properties in package["bundleOverrides"].iteritems():
+                if self.args.bundle and bundleOverride != self.args.bundle:
+                    continue
+
+                print("\n# %s bundle overrides" % bundleOverride)
+
+                if properties["preamble"]:
+                    print("# %s" % properties["preamble"])
+
+                # print(properties)
+                for props in properties["properties"] or []:
+                    # print(props)
+                    print()
+
+                    if self.args.verbose:
+                        print("# (key=%s userKey=%s)" % (props["key"], props["userKey"]))
+
+                    if props["description"]:
+                        print("# %s" % props["description"].strip())
+
+                    print("%s%s=%s" % ("#" if props["hidden"] else "",  props["name"], props["value"]))
+            print()
+
+    def add_overrides(self):
+
+        if not self.args.package_ids:
+            print("Please include a package id from:")
+            self.args.all = False
             for package in self._get_packages():
-                package.get_json()
-                print("# Package id %s, %s, version %s" % (package.item_id, package["packageName"], package["version"]))
+                self._print_package(package)
+            return
 
-                for bundleOverride, properties in package["bundleOverrides"].iteritems():
-                    print("# %s bundle overrides" % bundleOverride)
+        if not self.args.bundle:
+            print("Please include a bundle name from:")
+            for package in self._get_packages():
+                for b in package.bundles():
+                    print(b["name"])
+            return
 
-                    if properties["preamble"]:
-                        print("# %s" % properties["preamble"])
+        if not self.args.preamble and not self.args.replace and not self.args.properties and not self.args.list:
+            # TODO list here with x=base -> x=override or something (tricky - need the map)
+            print("# Nothing to do so listing existing overrides. Add --list to list base properties you may with to override:\n")
+            return self.list_overrides()
 
-                    # print(properties)
-                    for props in properties["properties"]:
-                        # print(props)
-                        # print()
+        if self.args.list:
+            for package in self.acc.packages_many(self.args.package_ids):
+                # TODO we could validate our overrides against the overrides in the bundle
+                for bundle in package.bundles():
+                    if bundle["name"] == self.args.bundle:
 
-                        if props["description"]:
-                            print("# %s" % props["description"])
+                        print("# Base properties in bundle: %s version: %s" % (bundle["name"], bundle["version"]))
+                        profile = bundle.profile()
+                        profile.get_json()
+                        # print(profile)
 
-                        print("%s%s=%s" % ("#" if props["hidden"] else "",  props["name"], props["value"]))
-                print()
+                        for prop in profile["properties"] or []:
+                            print("%s=%s" % (prop["name"], prop["value"] or ""))
+                        print()
+                        break
+                else:
+                    print("didn't find bundle %s in the package" % self.args.bundle)
+                    break
+            return
+
+        val_re = re.compile("^([#]?)(.*)=(.*)")
+
+        for package in self.acc.packages_many(self.args.package_ids):
+            # package.get_json()
+            # print(package)
+            # package.add_overrides(overrides)
+
+            if self.args.replace:
+                master = {}
+            else:
+                # Get the existing bundle overrides for this package
+                master = package["bundleOverrides"]
+
+            overrides = master.get(self.args.bundle)
+
+            existing_overrides = {}
+
+            if not overrides:
+                overrides = master[self.args.bundle] = {}
+            else:
+                print("overrides", overrides)
+
+                # build a lookup of non hidden existing overrides
+                for bundle, properties_list in overrides.iteritems():
+                    for prop in properties_list or []:
+                        # print("%s%s=%s" % ("#" if prop["hidden"] else "", prop["name"], prop["value"]))
+                        if not prop["hidden"]:
+                            existing_overrides[prop["name"]] = prop
+
+            if self.args.preamble:
+                overrides["preamble"] = self.args.preamble
+
+            # loop over the overrides we want to add
+            for prop in self.args.properties:
+                prop_split = val_re.split(prop)
+
+                hidden = prop_split[1] == "#"
+                name = prop_split[2]
+                value = prop_split[3]
+
+                properties = overrides.get("properties")
+
+                if not properties:
+                    properties = overrides["properties"] = []
+
+                if not hidden:
+                    # do any of our new properties replace the existing ones?
+                    existing = existing_overrides.get(prop_split[2])
+
+                    if existing:
+                        # update the one that is there
+                        print("Updating existing override %s from %s to %s" % (name, existing["value"], value))
+                        existing["value"] = value
+                        continue
+
+                prop_dic = {"description": None,
+                            "hidden": hidden,
+                            "name":  name,
+                            "value": value}
+
+                properties.append(prop_dic)
+
+            package.add_overrides(master)
 
     def main(self):
 
