@@ -148,6 +148,16 @@ def parse_date(date):
     return datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
 
 
+def get_filename_from_content_disp(res):
+    cdisp = [h.strip() for h in res.msg["content-disposition"].split(";")]
+    for c in cdisp:
+        if c.startswith("filename="):
+            filename = c.split('=', 1)[1]
+            break
+
+    return filename or "unknown"
+
+
 class AccRaw(object):
 
     """
@@ -464,10 +474,10 @@ class AccApi(AccRaw):
         """Factory to create lots of Package objects from a list of package ids"""
         return [Package(self, package_id) for package_id in package_ids]
 
-    def package_create(self, name, os, appserver, em_host, agent_version, process_display_name, comment):
+    def package_create(self, name, os, appserver, em_host, agent_version, process_display_name, comment, draft):
 
         body = """
-{"draft":false,
+{"draft":%(draft)s,
 "environment":{"osName":"%(os)s","process":"%(appserver)s","agentVersion":"%(agent_version)s","processDisplayName":"%(process_display_name)s"},
 "bundleOverrides":{},
 "emHost":"%(em_host)s",
@@ -1099,9 +1109,9 @@ class SecurityToken(FetchableJsonObject):
 
 
 class Bundles(PagedJsonObject):
-
-    def my_url(self):
-        return "private/bundle"
+    # 10.2
+    # def my_url(self):
+    #     return "private/bundle"
 
     def my_name(self):
         return "bundle"
@@ -1112,16 +1122,32 @@ class Bundles(PagedJsonObject):
 
 class Bundle(FetchableJsonObject):
 
-    def my_url(self):
-        return "private/bundle"
+    # 10.2
+    # def my_url(self):
+    #     return "private/bundle"
 
     def my_name(self):
         return "bundle"
 
-    # def profile(self):
-    #     res = self.accapi.http_get_json("/apm/acc/bundle", "%s/profile" % self.item_id)
-    #     p = Profile(res)
-    #     return p
+    def profile(self):
+        return Profile(self.accapi, self.item_id)
+
+    def filename(self):
+        return "%s-%s.tar.gz" % (self["name"], self["version"])
+
+    def download(self, directory=None, filename=None):
+
+        if not filename:
+            filename = self.filename()
+
+        if directory:
+            filename = os.path.join(directory, filename)
+
+        if not os.path.exists(filename):
+            res = self.accapi.http_get("/apm/acc/bundle", self.item_id, format="tar.gz")
+            write_content_to_file(res, filename)
+
+        return filename
 
 
 # A profile hangs off of a Bundle
@@ -1131,7 +1157,7 @@ class Profile(FetchableJsonObject):
         return "profile"
 
     def my_url(self):
-        return "private/bundle/%s/profile" % self.item_id
+        return "bundle/%s/profile" % self.item_id
 
     # We have to override this as the parent class version will pass the item_id in which messes the derived url up.
     def get_json(self):
@@ -1162,19 +1188,17 @@ class Package(FetchableJsonObject):
         res = self.accapi.http_get("/apm/acc/package", self.item_id, headers, format=archive_format)
 
         if not filename:
-            cdisp = [h.strip() for h in res.msg["content-disposition"].split(";")]
-            for c in cdisp:
-                if c.startswith("filename="):
-                    filename = c.split('=', 1)[1]
-                    break
-
-        if not filename:
-            filename = "unknown"
+            filename = get_filename_from_content_disp(res)
 
         filename = os.path.join(base_dir, filename)
         write_content_to_file(res, filename)
 
         return filename
+
+    def required_bundles(self):
+        bundles = self.accapi.http_get_json("/apm/acc/package", "%s/%s" % (self.item_id, "requiredBundles"))
+        for bundle in bundles["_embedded"]["bundle"]:
+            yield(Bundle(self.accapi, bundle))
 
     def compatible_bundles(self):
         bundles = self.accapi.http_get_json("/apm/acc/package", "%s/%s" % (self.item_id, "compatibleBundles"))
@@ -1186,10 +1210,10 @@ class Package(FetchableJsonObject):
         for bundle in bundles["_embedded"]["bundle"]:
             yield(Bundle(self.accapi, bundle))
 
-    def add_bundles(self, bundles):
+    def add_bundles(self, bundles, draft="false"):
         """{"bundles":["bundle/1","bundle/2"],"draft":false}"""
 
-        body = '{"bundles":[%s]}' % ",".join((['"bundle/%s"' % b for b in bundles]))
+        body = '{"bundles":[%s],"draft":%s}' % (",".join(['"bundle/%s"' % b for b in bundles]), draft)
 
         res, json_obj = self.accapi.http_patch("/apm/acc/package/" + str(self.item_id), body)
 
@@ -1199,9 +1223,11 @@ class Package(FetchableJsonObject):
             raise ACCHttpException(res)
 
     def add_overrides(self, overrides):
+        """Add overrides already in json structure"""
 
         body='{"bundleOverrides": %s}' % json.dumps(overrides)
-        print("body is", body)
+        print("body is:", body)
+        # pprint.PrettyPrinter(indent=2).pprint(body)
 
         res, json_obj = self.accapi.http_patch("/apm/acc/package/" + str(self.item_id), body)
 

@@ -35,8 +35,7 @@ class App(pyacc.AccCommandLineApp):
             # bundle["id"]
             # print("Bundle:", bundle)
 
-            p = pyacc.Profile(self.acc, bundle.item_id)
-
+            p = bundle.profile()
             props = p["properties"]
 
             if props:
@@ -51,7 +50,7 @@ class App(pyacc.AccCommandLineApp):
                     if self.args.verbose:
                         print("# key=%s" % (prop["key"]))
 
-                    print("%s=%s" % (prop["name"], prop["value"]))
+                    print("%s%s=%s" % ("#" if prop["hidden"] else "", prop["name"], prop["value"]))
 
 if __name__ == "__main__":
     App().run()
