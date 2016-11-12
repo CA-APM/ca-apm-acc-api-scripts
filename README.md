@@ -12,7 +12,7 @@ The extension `python-library-and-examples` contains a python wrapper library (`
 
 For installation instructons, see the ReadMe.MD file.
 
-# License GUENTER IS THIS OK?
+# License
 [Apache License, Version 2.0, January 2004](http://www.apache.org/licenses/).
 
 # Prerequisites
@@ -33,47 +33,6 @@ For installation instructons, see the ReadMe.MD file.
 3. While in the directory where this scripts resides import these modules:
 	'<npm install commander>'
 	'<npm install sync-request>'
-
-# Install the Extension
-
-## Install Using CA APM Control Center
-
-### 10.5 
-
-1. Download the bundle (extension) from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Go to the Bundles page and click the **Import** button.
-2. Navigate to the downloaded bundle and click **Open**.
-3. On the Packages page, add the bundle to the desired package.
-
-### 10.2 and 10.3
-
-1. Download the extension (bundle) from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Navigate to the downloaded bundle.
-3. Copy the bundle to the <APMCommandCenterServer>/import directory. 
-   The bundle is automatically imported into the APM Command Center database and moved to the bundles directory.
-
-## Install the Extension Manually
-
-### 10.5 and later
-
-1. Download the extension from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Navigate to the downloaded extension and untar the file into the <*Agent_Home*> directory.
-3. Copy the .tar file to the <*Agent_Home*>/extensions/deploy directory.
-   The agent automatically automatically installs and deploys the extension, which starts monitoring the managed application.
-
-### 10.3 and earlier
-
-1. Download the extension from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Navigate to the downloaded extension and unzip or untar the file as appropriate into the <*Agent_Home*> directory.
-3. Add the extension jar file to the <*Agent_Home*>/core/ext directory.
-4. Add the .pbd or pbl files to the <*Agent_Home*>/core/config directory.
-5. Update the IntroscopeAgent.profile file
-6. Navigate to <*Agent_Home*>/core/config to update the IntroscopeAgent.profile file.
-7. Add the .pbl files to the directives in the IntroscopeAgent.profile.
 
 # Run Scripts
 All scripts require providing valid server URL and security token either as command line option argument or by hardcoding them in the scripts.
@@ -356,14 +315,14 @@ Sample outputs:
 # Support
 This document and extension are made available from CA Technologies. They are provided as examples at no charge as a courtesy to the CA APM Community at large. This extension might require modification for use in your environment. However, this extension is not supported by CA Technologies, and inclusion in this site should not be construed to be an endorsement or recommendation by CA Technologies. This extension is not covered by the CA Technologies software license agreement and there is no explicit or implied warranty from CA Technologies. The extension can be used and distributed freely amongst the CA APM Community, but not sold. As such, it is unsupported software, provided as is without warranty of any kind, express or implied, including but not limited to warranties of merchantability and fitness for a particular purpose. CA Technologies does not warrant that this resource will meet your requirements or that the operation of the resource will be uninterrupted or error free or that any defects will be corrected. The use of this extension implies that you understand and agree to the terms listed herein.
 Although this extension is unsupported, please let us know if you have any problems or questions. You can add comments to the CA CA APM Community site so that the author(s) can attempt to address the issue or question.
-Unless explicitly stated otherwise this extension is only supported on the same platforms as the CA APM Java agent. 
+Unless explicitly stated otherwise this extension is only supported on the same platforms as the CA APM Java agent.
 
 # Product Compatibilty Matrix
 http://pcm.ca.com/
 
 # Categories
 
-Examples GUENTER IS THIS OK?
+Examples
 
 # Change Log
 Changes for each extension version.
@@ -371,4 +330,4 @@ Changes for each extension version.
 Version | Author | Comment
 --------|--------|--------
 1.0 | Guenter Grossberger | First version of the extension.
-
+1.1 | James Hilling, Miroslaw Turski | Update for 10.5 and various script fixes and updates
