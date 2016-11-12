@@ -371,4 +371,3 @@ Changes for each extension version.
 Version | Author | Comment
 --------|--------|--------
 1.0 | Guenter Grossberger | First version of the extension.
-

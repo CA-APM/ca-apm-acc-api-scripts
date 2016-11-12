@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # This is a sample Python script that uses APM Command Center API to manage
 # of out-of-date Controllers.
@@ -28,6 +30,12 @@ args = parser.parse_args()
 url = urlparse.urlparse(args.server)
 headers = {"content-Type":"application/json", "authorization":"Bearer " + args.token}
 if url.scheme == "https":
+	# Python 2.7.9 introduced validation of certificate as default.
+	# To switch it off replace the conn =... line with the following ones:
+	#import ssl
+	#sslContext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+	#sslContext.verify_mode = ssl.CERT_NONE
+	#conn = httplib.HTTPSConnection(url.netloc, context=sslContext)
 	conn = httplib.HTTPSConnection(url.netloc)
 elif url.scheme == "http":
 	conn = httplib.HTTPConnection(url.netloc)
@@ -38,7 +46,7 @@ uuids=[]
 
 if args.uuid:
 	uuids = args.uuid
-	
+
 serverNames={}
 
 # Get current server version

@@ -5,23 +5,13 @@
 #
 
 SERVER_URL="https://accdemowin01:8443"
-SECURITY_TOKEN="e4f73a7b-3df5-43b4-8933-55c7663ce1ec"
+SECURITY_TOKEN="a0c065c6-849a-4e26-b0de-ee58db33c5b5"
 
-# Echos list of interger values for the property name provided from a json response.
-#
-# args: [1]json(required), [2]name(required)
-getJsonIntValues() {
-	local values=$(echo "$1" | grep "\"$2\"[\t ]*:[\t ]*[0-9]*" | cut -f 2 -d':'| cut -f 1 -d',' | sed -e 's/^[/t ]*//g' -e 's/[/t ]*$//g')
-	echo "$values"
-}
-
-# Echos list of string values for the property name provided from a json response.
-#
-# args: [1]json(required), [2]name(required)
-getJsonStringValues() {
-	local values=$(echo "$1" | grep "\"$2\"[\t ]*:[\t ]*\".*\"" | cut -f 2 -d':'| cut -f 1 -d',' | sed -e 's/^[/t ]*\"//g' -e 's/\"[/t ]*$//g')
-	echo "$values"
-}
+# Check existance of the required commands: curl, jq, ...
+command -v curl >/dev/null 2>&1 || { echo >&2 "Unable to find curl.  Aborting."; exit 1; }
+command -v sed >/dev/null 2>&1 || { echo >&2 "Unable to find sed.  Aborting."; exit 1; }
+command -v awk >/dev/null 2>&1 || { echo >&2 "Unable to find awk.  Aborting."; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo >&2 "Unable to find jq (https://stedolan.github.io/jq/).  Aborting."; exit 1; }
 
 # Echos agent parts of json response to request for getting agents based on a query.
 # All agents are returned (paging is handled).
@@ -30,18 +20,14 @@ getJsonStringValues() {
 getAgents() {
 	local pageSize=1000
 	local agents=$(curl -G -s 0 -k -H "$CONTENT_TYPE" -H "$AUTHORIZATION" "$API_URL/agent" --data-urlencode "q=$1" --data "size=$pageSize" --data "projection=${2:-"full"}")
-	local totalPages=$(getJsonIntValues "$agents" "totalPages")
+	local totalPages=$(echo $agents | jq ".page.totalPages")
 	if [ "$totalPages" != "" ] && [ $totalPages -gt 0 ]; then
 		# Keep just agent : [...] part of the response
-		local startLine=`echo "$agents" | grep -n "\"agent\"[\t ]*:[\t ]*\[[\t ]*{" | cut -d: -f1`
-		local stopLine=`echo "$agents" | grep -n "}[\t ]*\]" | cut -d: -f1`
-		agents=`echo "$agents" | sed "$startLine,$stopLine!d"`
+		agents=$(echo $agents | jq "._embedded.agent[]")
 		if [ $totalPages -gt 1 ]; then
 			for pageNo in `seq 1 $((totalPages-1))`; do
 				local pageAgents=$(curl -s 0 -k -H "$CONTENT_TYPE" -H "$AUTHORIZATION" "$API_URL/agent?$projection&size=$pageSize&page=$pageNo&q=$1")
-				startLine=`echo "$pageAgents" | grep -n "\"agent\"[\t ]*:[\t ]*\[[\t ]*{" | cut -d: -f1`
-				stopLine=`echo "$pageAgents" | grep -n "}[\t ]*\]" | cut -d: -f1`
-				pageAgents=`echo "$pageAgents" | sed "$startLine,$stopLine!d"`
+				pageAgents=$(echo $pageAgents | jq "._embedded.agent[]")
 				agents=$agents$'\n'$pageAgents
 			done
 		fi
@@ -58,35 +44,35 @@ authorize() {
 list() {
 	local agents=$(getAgents "$QUERY")
 	#echo "Agents=$agents"
-	local id=($(getJsonIntValues "$agents" "id"))
+	local id=($(echo $agents | jq ".id"))
 	#echo "id=${id[@]}"
 	if [ ${#id[@]} -eq 0 ]; then
 		echo "No agent(s) found matching the criteria"
 	else
-		local agentName=($(getJsonStringValues "$agents" "agentName"))
-		local processName=($(getJsonStringValues "$agents" "processName"))
-		local status=($(getJsonStringValues "$agents" "status"))
-		local serverName=($(getJsonStringValues "$agents" "serverName"))
-		local logLevel=($(getJsonStringValues "$agents" "logLevel"))
-		echo "ID:    Agent name:     Process name:   Status:  Server name:    Log level:"
-		echo "------ --------------- --------------- -------- --------------- ----------"
+		local agentName=($(echo $agents | jq -r ".agentName"))
+		local processName=($(echo $agents | jq -r ".processName"))
+		local status=($(echo $agents | jq -r ".status"))
+		local serverName=($(echo $agents | jq -r ".serverName"))
+		local logLevel=($(echo $agents | jq -r ".logLevel"))
+		echo "ID:    Agent name:     Process name:   Status:  Server name:         Log level:"
+		echo "------ --------------- --------------- -------- -------------------- ----------"
 		for ((i=0;i<${#id[@]};++i)); do
-			printf "%-6s %-15s %-15s %-8s %-15s %-10s\n" "${id[i]}" "${agentName[i]}" "${processName[i]}" "${status[i]}" "${serverName[i]}" "${logLevel[i]}"
+			printf "%-6s %-15s %-15s %-8s %-20s %-10s\n" "${id[i]}" "${agentName[i]}" "${processName[i]}" "${status[i]}" "${serverName[i]}" "${logLevel[i]}"
 		done
 	fi
 }
 
 set() {
 	local agents=$(getAgents "$QUERY")
-	local id=($(getJsonIntValues "$agents" "id"))
+	local id=($(echo $agents | jq ".id"))
 	if [ ${#id[@]} -eq 0 ]; then
 		echo "No agent(s) found matching the criteria"
 	else
-		local agentName=($(getJsonStringValues "$agents" "agentName"))
-		local processName=($(getJsonStringValues "$agents" "processName"))
-		local status=($(getJsonStringValues "$agents" "status"))
-		local serverName=($(getJsonStringValues "$agents" "serverName"))
-		local logLevel=($(getJsonStringValues "$agents" "logLevel"))
+		local agentName=($(echo $agents | jq -r ".agentName"))
+		local processName=($(echo $agents | jq -r ".processName"))
+		local status=($(echo $agents | jq -r ".status"))
+		local serverName=($(echo $agents | jq -r ".serverName"))
+		local logLevel=($(echo $agents | jq -r ".logLevel"))
 		echo "Setting Log Level on matching APM Agents..."
 		for ((i=0;i<${#id[@]};++i)); do
 			if [ ${status[i]} == "ACTIVE" -a "${logLevel[i]}" != "$LOG_LEVEL" ]; then
