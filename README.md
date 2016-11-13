@@ -2,17 +2,17 @@
 
 # Short Description
 
-This extension provides a suite of example scripts using the CA APM Command Center API for automating typical tasks.
+The CA APM Command Center API Scripts Java extension provides a suite of example scripts using the CA APM Command Center API for automating typical tasks.
 
 # Description
 
-This extension provides a suite of example scripts using the CA APM Command Center API for automating typical tasks.
+The CA APM Command Center API Scripts Java extension provides a suite of example scripts using the CA APM Command Center API for automating typical tasks.
 
 The extension `python-library-and-examples` contains a python wrapper library (`pyacc.py`) and associated sample scripts for alternative methods of writing APM Command Center utility scripts.
 
-For installation instructons, see the ReadMe.MD file.
+For installation instructions, see the README.md file.
 
-# License GUENTER IS THIS OK?
+# License
 [Apache License, Version 2.0, January 2004](http://www.apache.org/licenses/).
 
 # Prerequisites
@@ -21,53 +21,22 @@ For installation instructons, see the ReadMe.MD file.
 * The scripts directory in the extension downloaded to your local drive.
 
 # Dependencies
-* The (*.py) script(s) require Pyhton 2.7 or higher (see comments in the scripts for changes for SSL handling introduced in Python 2.7.9)
+* The (*.py) script(s) require Python 2.7 or higher (see comments in the scripts for changes for SSL handling introduced in Python 2.7.9)
 * The (*.groovy) script(s) require Groovy 3 or higher
 * The (*.js) script(s) require Node JS with commander and sync-request modules
-* The (*.sh) script(s) require Bash with GNU toolset (curl version 7.18.0 or higher) and [the jq JSON parser](https://stedolan.github.io/jq/).
+* The (*.sh) script(s) require Bash with GNU toolset (curl version 7.18.0 or higher) and [the jq JSON parser.](https://stedolan.github.io/jq/)
 
 # Install Groovy and Node.js
 
-1. Follow [the instructions](http://www.groovy-lang.org/install.html) on how to install the latest version of Groovy.
+1. Follow [the instructions](http://www.groovy-lang.org/install.html) to install the latest version of Groovy.
 2. Install [Node.js](https://nodejs.org) and then add it to your system path.
-3. While in the directory where this scripts resides import these modules:
+3. While in the directory where the scripts resides import these modules:
 	'<npm install commander>'
 	'<npm install sync-request>'
 
-# Install the Extension
+# Install CA APM Command Center API Scripts
 
-## Install Using CA APM Control Center
-
-### 10.5 
-
-1. Download the bundle (extension) from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Go to the Bundles page and click the **Import** button.
-2. Navigate to the downloaded bundle and click **Open**.
-3. On the Packages page, add the bundle to the desired package.
-
-### 10.2 and 10.3
-
-1. Download the extension (bundle) from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Navigate to the downloaded bundle.
-3. Copy the bundle to the <APMCommandCenterServer>/import directory. 
-   The bundle is automatically imported into the APM Command Center database and moved to the bundles directory.
-
-## Install the Extension Manually
-
-### 10.5 and later
-
-1. Download the extension from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
-2. Navigate to the downloaded extension and untar the file into the <*Agent_Home*> directory.
-3. Copy the .tar file to the <*Agent_Home*>/extensions/deploy directory.
-   The agent automatically automatically installs and deploys the extension, which starts monitoring the managed application.
-
-### 10.3 and earlier
-
-1. Download the extension from the CA APM Marketplace.
-   http://marketplace.ca.com/shop/ca/?cat=29
+1. Download the extension from the [CA APM Marketplace.] (http://marketplace.ca.com/shop/ca/?cat=29)
 2. Navigate to the downloaded extension and unzip or untar the file as appropriate into the <*Agent_Home*> directory.
 3. Add the extension jar file to the <*Agent_Home*>/core/ext directory.
 4. Add the .pbd or pbl files to the <*Agent_Home*>/core/config directory.
@@ -75,11 +44,11 @@ For installation instructons, see the ReadMe.MD file.
 6. Navigate to <*Agent_Home*>/core/config to update the IntroscopeAgent.profile file.
 7. Add the .pbl files to the directives in the IntroscopeAgent.profile.
 
-# Run Scripts
-All scripts require providing valid server URL and security token either as command line option argument or by hardcoding them in the scripts.
+# Run CA APM Command Center API Scripts
+All scripts require providing a valid server URL and security token either as a command-line option argument or by hardcoding them in the scripts.
 The following code snippets assume the latter.
 
-## Agent-diag-report.groovy script
+## Agent-diag-report.groovy Script
 
 Command line help:
 
@@ -118,9 +87,9 @@ Sample output:
 	WARNING: Cannot find parser for content-type: application/zip -- using default parser.
 	-> File /tmp/reports/ACCDemoWin01_Tomcat_Tomcat+Agent-75-20150723-155650.zip downloaded, extracting to /tmp/reports...done
 
-## Agent-log-level.sh script
+## Agent-log-level.sh Script
 
-Command line help:
+Command-line help:
 
 	> ./agent-log-level.sh --help
 	Uses APM Command Center API to automate handling of log levels of CA APM agents.
@@ -166,9 +135,9 @@ Sample outputs:
 	Requesting Log Level change from DEBUG to INFO on APM Agent ACCDemoWin01/Tomcat Agent/Tomcat
 	-> Created "https://accdemowin01:8443/apm/acc/agentUpdateTask/41"
 
-## Out-of-date-controllers.py script
+## Out-of-date-controllers.py Script
 
-Command line help:
+Command-line help:
 
 	> python out-of-date-controllers.py --help
 	usage: out-of-date-controllers.py [-h] [-s SERVER] [-t TOKEN] [-w TIMEOUT]
@@ -222,9 +191,9 @@ Sample outputs:
 	-> Upgrade of controller 4d62fc3a-0004-4192-8341-a99b21a4dc50/Host-4 COMPLETED
 	-> Upgrade of controller 4d62fc3a-0000-4192-8341-a99b21a4dc50/Host-0 COMPLETED
 
-## Upgrade-controller.js script (NodeJS version of out-of-date-controllers.py)
+## Upgrade-controller.js Script (NodeJS version of out-of-date-controllers.py)
 
-Command line help:
+Command-line help:
 
 	> node upgrade-controller.js -h
 
@@ -290,7 +259,7 @@ Upgrade selected controllers, note; they're separated by ","
 	Upgrade of controller 4d62fc3a-0000-4192-8341-a99b21a4dc50/Host-0 COMPLETED
 	---------------------------------Completed---------------------------------
 
-## Copy-file.sh script
+## Copy-file.sh Script
 
 This script is required to enable CA APM Command Center API file operation tasks.
 
@@ -355,15 +324,18 @@ Sample outputs:
 
 # Support
 This document and extension are made available from CA Technologies. They are provided as examples at no charge as a courtesy to the CA APM Community at large. This extension might require modification for use in your environment. However, this extension is not supported by CA Technologies, and inclusion in this site should not be construed to be an endorsement or recommendation by CA Technologies. This extension is not covered by the CA Technologies software license agreement and there is no explicit or implied warranty from CA Technologies. The extension can be used and distributed freely amongst the CA APM Community, but not sold. As such, it is unsupported software, provided as is without warranty of any kind, express or implied, including but not limited to warranties of merchantability and fitness for a particular purpose. CA Technologies does not warrant that this resource will meet your requirements or that the operation of the resource will be uninterrupted or error free or that any defects will be corrected. The use of this extension implies that you understand and agree to the terms listed herein.
-Although this extension is unsupported, please let us know if you have any problems or questions. You can add comments to the CA CA APM Community site so that the author(s) can attempt to address the issue or question.
+Although this extension is unsupported, please let us know if you have any problems or questions. You can add comments to the CA APM Community site so that the author(s) can attempt to address the issue or question.
 Unless explicitly stated otherwise this extension is only supported on the same platforms as the CA APM Java agent. 
+
+# Support URL
+https://github.com/CA-APM/ca-apm-acc-api-scripts/issues
 
 # Product Compatibilty Matrix
 http://pcm.ca.com/
 
 # Categories
 
-Examples GUENTER IS THIS OK?
+Examples
 
 # Change Log
 Changes for each extension version.
